@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="Pay_It_Forward.css">
+    <title>Pay It Forward</title>
+    <style>
+      /* styling for modal boxes, and grid layout
+      credit to module 6 styling */
+    h1 {
+      text-align: center;
+      font-size: 45px;
+      color: blue;
+    }
+    h2 {
+      display:none;
+    }
+    /* words are wrapped and overflow uses scroll */
+    .grid-container {
+      display: grid;
+      grid-template-columns: 200px auto 200px;
+      grid-template-rows: 75px 75px 430px;
+      grid-gap: 10px;
+      padding: 10px;
+      background-color: lightblue;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+    .bod{
+      background-color: lightgray;
+    }
+    .grid-item{
+      background-color: white;
+      padding: 20px;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+    .login{
+      grid-column: 1;
+      grid-row: 1 / span 2;
+    }
+
+    .groups{
+      grid-column: 1;
+      grid-row: 3;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+
+    .name{
+      grid-column: 2;
+      grid-row: 1;
+      text-align: center;
+      font-size: 45px;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+
+    .users{
+      grid-row: 1 / span 3;
+      grid-column: 3;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+
+    .group{
+      grid-column: 2;
+      grid-row: 2 / span 3;
+      display: grid;
+      grid-template-rows: auto 40px;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+    .allDeals{
+      grid-row: 1;
+      word-wrap: break-word;
+      overflow-y: scroll;
+    }
+    .sender{
+      grid-row: 2;
+    }
+/* Handles the pop-up boxes for creating groups */
+    .modal-container{
+      display: none;
+    }
+
+    .containerOn{
+      display: block;
+      position: fixed;
+      z-index: 1;
+      padding-top: 100px;
+      left: 20%;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      overflow: auto;
+      grid-template-columns: auto 10px;
+    }
+
+    .modal-item{
+      background-color: white;
+       margin: auto;
+       padding: 5px;
+       border: 1px solid black;
+       width: 80%;
+       grid-column: 1;
+    }
+
+    .x{
+      width: 20px;
+      text-align: center;
+      grid-column: 2;
+    }
+
+    .textarea{
+      width: auto;
+      height: 75px;
+    }
+
+    </style>
+  </head>
+  <body id=bod>
+    <!-- layout for page, with credit to module 6 -->
+    <!-- modal for public room entry -->
+    <div class="modal-container" id = "pub">
+    <input class="modal-item x" type="submit" id="closePub" value="X"/>
+    <div class="modal-item popupPub" id="Public">Create Public Group: <br>
+      Name: <input type="text" id="pubName"/> <br>
+      <input type="submit" id="setPub" value="Finish"/>
+    </div>
+    </div>
+  <!-- modal for private room entry -->
+    <div class="modal-container" id = "priv">
+    <input class="modal-item x" type="submit" id="closePriv" value="X"/>
+    <div class="modal-item popupPriv" id="private">Create Private Group: <br>
+      Name: <input type="text" id="privName"/> <br>
+      Password: <input type="text" id="privPass"/> <br>
+      <input type="submit" id="setPriv" value="Finish"/>
+    </div>
+    </div>
+    <h1>Pay It Forward</h1>
+    <h2 id="hider">Placeholder</h2>
+    <div class="grid-container">
+    <div class="grid-item login" id="logIn">
+      <p id="message">Welcome! Logged in as:</p>
+      <p id="account"></p>
+      <input type="submit" id="logout" value="Log Out"/>
+    </div>
+    <div class="grid-item groups" id="listGroups">Create Groups:
+      <input type="submit" id="makePubGroup" value="Create Public Group"/>
+      <input type="submit" id="makePrivGroup" value="Create Private Group"/>
+      <br><br>
+      <!-- drop down menus for groups, and searching groups (part of creative portion) -->
+      Choose Public Group:
+      <select id=pubDrop>
+      </select>
+      <br><br>
+      <input type="submit" id="choosePub" value="Select"/>
+      <br><br>
+      Choose Private Group:
+      <select id=privDrop>
+      </select><br><br>
+      Enter Password: <br><br>
+      <input type="text" id="enterPriv"/>
+      <input type="submit" id="choosePriv" value="Select"/><br><br>
+      Search For Public Group:
+      <input type="text" id="searchGroup"/>
+      <input type="submit" id="search" value="Search"/>
+    </div>
+    <div class="grid-item name" id="topGroupName">Select A Group</div>
+    <div class="grid-item group" id="theGroup">
+      <div class="allDeals" id="allDeals"></div>
+      <div class="grid-item sender" id="theRoom">
+      <input type="text" id="deal" style="width:500px;"/>
+      <input type="submit" id="postDeal" value="Post"/>
+      <input type="submit" id="refresh" value="Load New Groups and Deals"/>
+      </div>
+    </div>
+    <div class="grid-item users" id="listUsers">Users:</div>
+  </div>
+  <script>
+    //sets up global variabes
+    let username = '';
+    let zipcode = '';
+    let total = {};
+    let theGroupName = '';
+    let founder = '';
+
+    //adds event listeners for buttons
+    document.getElementById('postDeal').addEventListener('click', postDeal);
+    document.getElementById('makePubGroup').addEventListener('click', function(){addGroup("setPub")});
+    document.getElementById('makePrivGroup').addEventListener('click', function(){addGroup("setPriv")});
+    document.getElementById('setPub').addEventListener('click', createPublic);
+    document.getElementById('setPriv').addEventListener('click', createPrivate);
+    document.getElementById('logout').addEventListener('click', logOut);
+    document.getElementById('refresh').addEventListener('click', refresh);
+    document.getElementById('closePub').addEventListener('click', closeIt);
+    document.getElementById('closePriv').addEventListener('click', closeIt);
+    document.getElementById('choosePub').addEventListener('click', function(){joinGroup("pubDrop")});
+    document.getElementById('choosePriv').addEventListener('click', function(){joinGroup("privDrop")});
+    document.getElementById('search').addEventListener('click', search);
+
+//determines which type of group a user is trying to create
+    function addGroup(b){
+      if (b=="setPub"){
+        document.getElementById("pub").className = "containerOn";
+      }
+      if (b=="setPriv"){
+        document.getElementById("priv").className = "containerOn";
+      }
+    }
+    //closes the modal boxes
+    function closeIt(){
+      document.getElementById("pub").className = "modal-container";
+      document.getElementById("priv").className = "modal-container";
+      document.getElementById("bod").className = "";
+    }
+    //without refreshing the page, this function reloads all the deals, likes, reports, users, and groups and is called by other functions
+    function refresh(){
+      //child nodes are deleted and then remade so they don't appear twice
+      while(document.getElementById('pubDrop').firstChild){
+        document.getElementById('pubDrop').removeChild(document.getElementById('pubDrop').firstChild);
+      }
+      while(document.getElementById('privDrop').firstChild){
+        document.getElementById('privDrop').removeChild(document.getElementById('privDrop').firstChild);
+      }
+      getGroups();
+      while(document.getElementById('listUsers').firstChild){
+        document.getElementById('listUsers').removeChild(document.getElementById('listUsers').firstChild);
+      }
+      document.getElementById('listUsers').appendChild(document.createTextNode("Users:"));
+      getUsers();
+      while(document.getElementById('allDeals').firstChild){
+        document.getElementById('allDeals').removeChild(document.getElementById('allDeals').firstChild);
+      }
+      getDeals();
+    }
+    //public group creation
+    function createPublic() {
+      const groupName = document.getElementById("pubName").value;
+      const data = {'groupName': groupName};
+      console.log(data);
+      fetch("createPublic.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          alert(data.message);
+          theGroupName = groupName;
+          document.getElementById("topGroupName").innerHTML = theGroupName;
+          refresh();
+          closeIt();
+        } else {
+          alert(`Your group was not added. ${data.message}`);
+        }
+      })
+    }
+//takes user back to the login page and kills the session
+    function logOut() {
+      fetch("logout.php", {
+         method: 'POST',
+      })
+      window.close();
+    }
+    //private group creation
+    function createPrivate() {
+      const groupName = document.getElementById("privName").value;
+      const password = document.getElementById("privPass").value;
+      const data = { 'groupName': groupName, 'password': password, 'zipcode': zipcode };
+      fetch("createPrivate.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          alert(data.message);
+          theGroupName = groupName;
+          document.getElementById("topGroupName").innerHTML = theGroupName;
+          refresh();
+          closeIt();
+        } else {
+          alert(`Your group was not added. ${data.message}`);
+        }
+      })
+    }
+    //adds a deal to the database
+    function postDeal() {
+     const groupName = theGroupName;
+     const deal = document.getElementById("deal").value;
+     const data = { 'groupName': groupName, 'deal': deal};
+      fetch("postDeal.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          alert(data.message);
+//refreshes to see new
+          refresh();
+        } else {
+          alert(data.message);
+        }
+      })
+    }
+
+//deletes a deal from the database
+function deleteDeal(b) {
+  const deal = b.substring(0, b.length-1);
+      const groupName = theGroupName;
+      const data = {'deal': deal, 'groupName' : groupName};
+      fetch("deleteDeal.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+        } else {
+          alert(data.message);
+        }
+      })
+//refreshes to see deal was deleted 
+    refresh();
+    }
+//called when a user selects a group from drop down menu
+    function joinGroup(b) {
+      let element = document.getElementById(b);
+      let groupName = element.options[element.selectedIndex].text;
+      let password ='';
+      //checks if the group was private and if the password entered needs to be compared to password of group
+      if(b=="privDrop") {
+        password = document.getElementById("enterPriv").value;
+      }
+        const data = {'groupName': groupName, 'password': password};
+        fetch("joinGroup.php", {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'content-type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if(data.success) {
+           //sets new group name
+            document.getElementById("topGroupName").innerHTML=groupName;
+            theGroupName = groupName;
+            //refresh to update
+            refresh();
+          } else {
+            alert(data.message);
+          }
+        })
+    }
+//only allowed for creator of a group
+    function banUser(b) {
+      const groupName = theGroupName;
+      const userTo = b.substring(0,b.length-4);
+      const data = {'groupName': groupName, 'userTo' : userTo};
+      fetch("banUser.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          alert(userTo + data.message+groupName);
+          refresh();
+        } else {
+          alert(data.message);
+        }
+      })
+    }
+//only allowed once per user per deal, likes increases in db
+    function likeDeal(b) {
+      const deal = b.substring(0,b.length-1);
+      const data = {'deal': deal};
+      fetch("likeDeal.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+        } else {
+          alert(data.message);
+        }
+      })
+      refresh();
+    }
+//only allowed once per user per deal, reports increases in db
+    function reportDeal(b) {
+      const deal = b.substring(0,b.length-1);
+      const data = {'deal': deal};
+      fetch("reportDeal.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          alert(data.message);
+        } else {
+          alert(data.message);
+        }
+      })
+      refresh();
+    }
+//pulls all deals from a certain group from db
+    function getDeals() {
+      const group = theGroupName;
+      const data = {'group': group};
+      fetch("getData.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success===true) {
+          console.log(data.deals);
+          data.deals.sort(function(a, b) {
+            return b['likes']-a['likes'];
+          });
+          console.log(data.deals);
+          for(var d in data.deals){
+            let time = data.deals[d].date;
+            let name = data.deals[d].deal;
+            let author = data.deals[d].poster;
+            let likes = data.deals[d].likes;
+            let reports = data.deals[d].reports;
+            let newNode = document.createTextNode(name);
+            //nodes are appended to the div including the name of the deal, who posted it, when, # of likes and reports, and buttons to like and report
+            //let newNode = document.createTextNode("Posted by " + author+ " on " + time.substring(0,10)+ " at " +time.substring(10)+": " +name);
+            document.getElementById("allDeals").appendChild(newNode);
+            let button = document.createElement("button");
+            button.innerHTML = "Like";
+            button.id = name+"0";
+            button.addEventListener('click', function(){likeDeal(button.id)});
+            document.getElementById("allDeals").appendChild(button);
+
+            //document.getElementById("allDeals").appendChild(document.createElement("br"));
+            let downbutton = document.createElement("button");
+            downbutton.innerHTML = "Report";
+            downbutton.id = name+"1";
+            downbutton.addEventListener('click', function(){reportDeal(downbutton.id)});
+            document.getElementById("allDeals").appendChild(downbutton);
+            //checks to see if the user logged in posted the deal and if so, appends a delete button
+            if (author==username){
+            //document.getElementById("allDeals").appendChild(document.createElement("br"));
+            let delbutton = document.createElement("button");
+            delbutton.innerHTML = "Delete";
+            delbutton.id = name+"2";
+            delbutton.addEventListener('click', function(){deleteDeal(delbutton.id)});
+            document.getElementById("allDeals").appendChild(delbutton);
+          }
+            document.getElementById("allDeals").appendChild(document.createElement("br"));
+            let infoNode = document.createTextNode("Likes: " + likes+ "     Reports: " + reports);
+            document.getElementById("allDeals").appendChild(infoNode);
+            document.getElementById("allDeals").appendChild(document.createElement("br"));
+            let textShtuff = document.createTextNode("Posted by " + author+ " on " + time.substring(0,10)+ " at " +time.substring(10));
+            document.getElementById("allDeals").appendChild(textShtuff);
+            document.getElementById("allDeals").appendChild(document.createElement("hr"));
+          }
+        } else {
+          alert(data.message);
+        }
+      })
+    }
+    //runs when page loads and starts a session and calls getGroups and Users
+    //sets the global variable username to be the username passed through
+    document.addEventListener('DOMContentLoaded', (event) => {
+      username = window.name.substring(0,window.name.length-5);
+      if (!username){
+        document.getElementById("message").innerHTML = "Welcome Unregistered User!";
+      }
+      zipcode = window.name.substring(window.name.length-5);
+      document.getElementById('account').innerHTML=username;
+      const data = { 'username': username, 'zipcode': zipcode};
+      fetch("startSession.php", {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'content-type': 'application/json' }
+      })
+    .then(response => response.json())
+    .then(data => {
+      if(data.success) {
+      } else {
+      }
+    })
+    getGroups();
+    getUsers();
+    });
+//called to pull all groups (pub and priv) from db
+    function getGroups() {
+          const data = {};
+          fetch("getGroups.php", {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'content-type': 'application/json' }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if(data.success) {
+              total = [...data.groups];
+              //console.log(total);
+              for(var g in total) {
+                let name = total[g].name;
+                let option = document.createElement("option");
+                option.text = name;
+                //determines if the group is public or private, and thus in which dropdown menu to add the group
+                if (total[g].hasPass==1){
+                  document.getElementById('privDrop').add(option);
+                }
+                else{
+                  document.getElementById('pubDrop').add(option);
+                }
+              }
+            } else {
+              alert(data.message);
+            }
+    })
+    }
+    //gets the user who created a certain inputted group
+    function getFounder(groupName) {
+        console.log(groupName);
+        const data = {"groupName" : groupName};
+        fetch("getFounder.php", {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'content-type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if(data.success) {
+            console.log(data.founder);
+            document.getElementById("hider").innerHTML = data.founder;
+          } else {
+            alert(data.message);
+          }
+        })
+     }
+//called to pull all the users from a specific group
+    function getUsers() {
+      let test = false;
+      const groupName = theGroupName;
+      getFounder(groupName);
+      const data = {'groupName': groupName};
+      fetch("getUsers.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          //iterates through all users and adds nodes to the div including user names, and temp ban buttons
+          for(var u in data.users){
+            let name = data.users[u];
+            const newName = document.createTextNode(name);
+            const holder  = document.createElement("LI");
+            holder.appendChild(newName);
+            document.getElementById('listUsers').appendChild(holder);
+            const button  = document.createElement("BUTTON");
+            button.innerHTML = "Temp Ban";
+            button.className = "tempBan";
+            button.id = data.users[u];
+            const buttonPerm  = document.createElement("BUTTON");
+            buttonPerm.innerHTML = "Perm Ban";
+            buttonPerm.className = "permBan";
+            buttonPerm.id = data.users[u]+"perm";
+            document.getElementById('listUsers').appendChild(button);
+            button.addEventListener('click', function(){tempBan(button.id)});
+            //console.log(document.getElementById('hider').textContent);
+            //checks to see if the user logged in created the group and if so, renders a perm ban button next to each user as well
+            if (document.getElementById('hider').innerHTML===username){
+              //sets test to true indicating the logged in user is the author
+              test=true;
+            document.getElementById('listUsers').appendChild(buttonPerm);
+            buttonPerm.addEventListener('click', function(){banUser(buttonPerm.id)});
+          }
+            }
+            if (test){
+              //renders a textbox and button to automatically add a user to a group
+              document.getElementById('listUsers').appendChild(document.createElement("br"));
+              document.getElementById('listUsers').appendChild(document.createTextNode("Add A User:"));
+              let text  = document.createElement("INPUT");
+              text.id = 'addUser';
+              document.getElementById("listUsers").appendChild(text);
+              let addButton = document.createElement("button");
+              addButton.innerHTML = "Add User";
+              addButton.id = name+"3";
+              addButton.addEventListener('click', function(){addUser(document.getElementById('addUser').value)});
+              document.getElementById("listUsers").appendChild(addButton);
+            }
+          }
+           else {
+alert(data.message);        
+}
+      })
+    }
+//bans someone from a group until the rejoin, and can be done by anyone in the group
+    function tempBan(b) {
+      const userTo = b;
+      const groupName = theGroupName;
+      const data = {};
+      fetch("tempBan.php", {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'content-type': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          // document.getElementById('account').innerHTML= "You are logged in as: " + username;
+          // document.getElementById('message').innerHTML= ("Your account has been registered!");
+          alert(userTo+data.message+groupName);
+        } else {
+          alert(data.message);
+          // document.getElementById('message').innerHTML= (`Your account was not registered. ${data.message}`);
+        }
+      })
+    }
+//allows a user to search for any public group, for example by keyword like a place
+    function search() {
+        const potential = document.getElementById("searchGroup").value;
+        const data = {"potential" : potential};
+        fetch("search.php", {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'content-type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if(data.success) {
+            alert(data.message);
+              theGroupName = potential;
+              document.getElementById("topGroupName").innerHTML=theGroupName;
+              refresh();
+          } else {
+            alert(data.message);
+          }
+        })
+      }
+//called when the author of the group wants to automatically add a user
+function addUser(userTo) {
+    const groupName = theGroupName;
+    const data = {"userTo" : userTo, "groupName": groupName};
+    fetch("addUser.php", {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'content-type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if(data.success) {
+        alert(data.message + userTo);
+        refresh();
+      } else {
+         alert(data.message);
+      }
+    })
+  }
+  </script>
+  </body>
+</html>

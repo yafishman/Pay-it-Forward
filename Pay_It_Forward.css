@@ -1,0 +1,88 @@
+h1 {
+  text-align: center;
+  font-size: 60px;
+  color: blue;
+}
+.grid-container {
+  display: grid;
+  grid-template-columns: 200px auto 200px;
+  grid-template-rows: 75px 75px 430px;
+  grid-gap: 10px;
+  padding: 10px;
+  background-color: lightblue;
+}
+.bod{
+  background-color: lightgray;
+}
+.grid-item{
+  background-color: white;
+  padding: 20px;
+}
+.login{
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.groups{
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.name{
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+}
+
+.users{
+  grid-row: 1 / span 3;
+  grid-column: 3;
+}
+
+.group{
+  grid-column: 2;
+  grid-row: 2 / span 3;
+  display: grid;
+  grid-template-rows: auto 40px;
+}
+.sender{
+  grid-row: 2;
+}
+
+.modal-container{
+  display: none;
+}
+
+.containerOn{
+  display: block;
+  position: fixed;
+  z-index: 1;
+  padding-top: 100px;
+  left: 20%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  overflow: auto;
+  grid-template-columns: auto 10px;
+  background:
+}
+
+.modal-item{
+  background-color: white;
+   margin: auto;
+   padding: 5px;
+   border: 1px solid black;
+   width: 80%;
+   grid-column: 1;
+}
+
+.x{
+  width: 20px;
+  text-align: center;
+  grid-column: 2;
+}
+
+.textarea{
+  width: auto;
+  height: 75px;
+}
